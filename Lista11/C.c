@@ -4,7 +4,7 @@
 struct candidate{int code, votes;};
 typedef struct candidate Item;
 #define exch(A, B) {Item temp = A; B = A; A = temp;}
-#define lesseq(A, B) (B <= A)
+#define less(A, B) (B < A)
 
 int length_of(int x) {return (x/10 == 0) ? 1 : 1 + length_of(x/10);};
 
@@ -31,10 +31,14 @@ void make_a_vote(Item ** jobs, int * votes, int * lenghts, int item){
     }
 }
 
+void show_results(){
+
+}
+
 int partition(Item *v, int l, int r){
     Item c = v[r]; int j = l;
     for(int k = l; k < r; k++){
-        if(lesseq(v[k].votes, c.votes)){
+        if(less(v[k].votes, c.votes)){
             exch(v[j], v[k]);
             j++;
         }
