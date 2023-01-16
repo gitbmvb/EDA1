@@ -1,100 +1,105 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 struct candidate{int code, votes;};
-typedef struct candidate Item;
-#define exch(A, B) {Item temp; temp.code = A.code; temp.votes = A.votes; A.code = B.code; A.votes = B.votes; B.code = temp.code; B.votes = temp.votes;}
+typedef struct candidate Candidate;
+#define exch(A, B) {Candidate temp; temp.code = A.code; temp.votes = A.votes; A.code = B.code; A.votes = B.votes; B.code = temp.code; B.votes = temp.votes;}
 #define less(A, B) (A < B)
 #define lesseq(A, B) (A <= B)
 #define equals(A, B) (A == B)
 #define cmpexch(A, B) if(less(A, B)) exch(A, B)
+#define key(A) A.votes
 
-int length_of(int x) {return (x/10 == 0) ? 1 : 1 + length_of(x/10);};
+int length_of(int x) { return (x/10 == 0) ? 1 : 1 + length_of(x/10);};
 
-int linearsearch(Item *v, int l, int r, int aim){
+int binarysearch(Candidate * cands, int l, int r, int aim){
     if(l > r) return -1;
-    if(v[l].code == aim) return l;
-    else return linearsearch(v, l + 1, r, aim);
+    int m = l + (r - l)/2;
+    if(cands[m].code == aim) return m;
+    else if(less(aim, cands[m].code)) return binarysearch(cands, l, m - 1, aim);
+    else return binarysearch(cands, m + 1, r, aim);
 }
 
-void insertionsort(Item * v, int l, int r){
+int linearsearch(Candidate * cands, int l, int r, int aim){
+    if(l > r) return -1;
+    return (cands[l].code == aim) ? l : linearsearch(cands, l + 1, r, aim);
+} 
+
+void insertionsort(Candidate * cands, int l, int r){
     for(int i = r; i > l; i--){
-        if(less(v[i].votes, v[i-1].votes) ||
-        (equals(v[i].votes, v[i-1].votes) && less(v[i].code, v[i-1].code))) exch(v[i], v[i-1]);
+        if(less(key(cands[i]), key(cands[i-1])) ||
+        (equals(key(cands[i]), key(cands[i-1])) && less(cands[i].code, cands[i-1].code))) exch(cands[i], cands[i-1]);
     }
     for(int i = l + 2; i <= r; i++){
         int k = i;
-        Item aux = v[k];
-        while(less(aux.votes, v[k - 1].votes) ||
-        (equals(aux.votes, v[k - 1].votes) && less(aux.code, v[k-1].code))){
-            v[k] = v[k -1];
+        Candidate aux = cands[k];
+        while(less(key(aux), key(cands[k - 1])) ||
+        (equals(key(aux), key(cands[k - 1])) && less(aux.code, cands[k-1].code))){
+            cands[k] = cands[k -1];
                 k--;
         }
-        v[k] = aux;
+        cands[k] = aux;
     }
 }
 
-int partition(Item * v, int l, int r){
-    Item c = v[r];
+int partition(Candidate * cands, int l, int r){
+    Candidate c = cands[r];
     int j = l;
     for(int k = l; k < r; k++){
-        if(less(c.votes, v[k].votes)){
-            exch(v[j], v[k]);
+        if(less(key(c), key(cands[k]))){
+            exch(cands[j], cands[k]);
             j++;
         }
     }
-    exch(v[r], v[j]);
+    exch(cands[r], cands[j]);
     return j;
 }
 
-void quicksort(Item * v, int l, int r){
+void quicksort(Candidate * cands, int l, int r){
     if(r - l <= 32) return;
-    exch(v[(l + r)/2], v[r - 1]);
-    if(less(v[r].votes, v[r-1].votes)) exch(v[r], v[r-1]);
-    if(less(v[r-1].votes, v[l].votes)) exch(v[r-1], v[l]);
-    if(less(v[r].votes, v[r-1].votes)) exch(v[r], v[r-1]);;
-    int j = partition(v, l + 1, r - 1);
-    quicksort(v, l, j - 1);
-    quicksort(v, j + 1, r);
+    exch(cands[(l + r)/2], cands[r - 1]);
+    if(less(key(cands[r]), key(cands[r-1]))) exch(cands[r], cands[r-1]);
+    if(less(key(cands[r-1]), key(cands[l]))) exch(cands[r-1], cands[l]);
+    if(less(key(cands[r]), key(cands[r-1]))) exch(cands[r], cands[r-1]);;
+    int j = partition(cands, l + 1, r - 1);
+    quicksort(cands, l, j - 1);
+    quicksort(cands, j + 1, r);
 }
 
-void quicksortinsertion(Item *v, int l, int r){
-    quicksort(v, l, r);
-    insertionsort(v, l, r);
+void quicksortinsertion(Candidate * cands, int l, int r){
+    quicksort(cands, l, r);
+    insertionsort(cands, l, r);
 }
 
-void make_a_vote(Item ** jobs, int * votes, int * lenghts, int item){
+void make_a_vote(Candidate ** cands, int * qtd, int * votes, int item){
     if(item < 0) votes[0]++;
     else{
-        int item_len = length_of(item) - 2;
-        int index_vote = linearsearch(jobs[item_len], 0, lenghts[item_len] - 1, item);
-        // printf("item_len of %d is %d. index_vote is %d\n", item, item_len, index_vote);
-        if(index_vote < 0){
-            lenghts[item_len]++;
-            jobs[item_len] = realloc(jobs[item_len], sizeof(Item) * lenghts[item_len]);
-            jobs[item_len][lenghts[item_len] - 1].code = item;
-            jobs[item_len][lenghts[item_len] - 1].votes = 1;
-        } else jobs[item_len][index_vote].votes++;
-        if(item_len == 0) votes[3]++;
+        int itemlen = length_of(item) - 2, itemindex = linearsearch(cands[itemlen], 0, qtd[itemlen] - 1, item);
+        if(itemindex < 0){
+            cands[itemlen] = realloc(cands[itemlen], sizeof(Candidate) * ++qtd[itemlen]);
+            cands[itemlen][qtd[itemlen] - 1].code = item;
+            cands[itemlen][qtd[itemlen] - 1].votes = 1;
+        } else cands[itemlen][itemindex].votes++;
         votes[1]++;
-        printf("jobs[%d][%d].code = %d\n", item_len, lenghts[item_len], jobs[item_len][lenghts[item_len - 1]].code);
+        if(itemlen == 0) votes[2]++;
     }
 }
 
-void show_results(Item ** v, int * lens, int * qtds, int * votes){
+void show_results(Candidate ** cands, int * qtd, int * PSFE, int * votesIVP){
     for(int i = 0; i < 4; i++){
-        quicksortinsertion(v[i], 0, lens[i] - 1);
-        for(int j = lens[i] - 1; j >= lens[i] - qtds[i]; j--)
-            (j - 1 >= lens[i] - qtds[i]) ? printf("%d(%d) ", v[i][j].code, i) : printf("%d(%d)\n", v[i][j].code, i);
+        quicksortinsertion(cands[i], 0, qtd[i] - 1);
+        for(int j = qtd[i] - 1; j >= qtd[i] - PSFE[i]; j--){
+            (i == 0 && key(cands[i][j]) * 100/votesIVP[2] < 51) ? printf("Segundo turno") : printf("%d", cands[i][j].code);
+            (j - 1 >= qtd[i] - PSFE[i]) ? printf(" ") : printf("\n");
+        }
     }
 }
 
-int main(void){
-    int lengths[4] = {0, 0, 0, 0}, votes_IVP[3] = {0, 0, 0}, qtdPSFE[4] = {1, 0, 0 ,0}, item;
-    Item ** jobs = malloc(sizeof(Item*) * 4);
-    for(int i = 0; i < 4; i++) jobs[i] = malloc(sizeof(Item) * lengths[i]);
-    scanf("%d %d %d", &qtdPSFE[1], &qtdPSFE[2], &qtdPSFE[3]);
-    while(scanf("%d", &item) == 1) make_a_vote(jobs, votes_IVP, lengths, item);
-    printf("%d %d\n", votes_IVP[1], votes_IVP[0]);
-    show_results(jobs, lengths, qtdPSFE, votes_IVP);
+int main(){
+    int PSFE[4] = {1, 0, 0, 0}, votesIVP[3] = {0, 0, 0}, qtd[4] = {0, 0, 0, 0}, item;
+    Candidate ** cands = malloc(sizeof(Candidate*) * 4);
+    for(int c = 0; c < 4; c++) cands[c] = malloc(sizeof(Candidate) * qtd[c]);
+    scanf("%d %d %d", &PSFE[1], &PSFE[2], &PSFE[3]);
+    while(scanf("%d", &item) == 1) make_a_vote(cands, qtd, votesIVP, item);
+    printf("%d %d\n", votesIVP[1], votesIVP[0]);
+    show_results(cands, qtd, PSFE, votesIVP);
 }
