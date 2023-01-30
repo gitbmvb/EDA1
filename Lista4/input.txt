@@ -1,8 +1,0 @@
-3 6
-Brasil 6
-Alemanha 5
-Japao 5
-2 8
-Brasil 13
-Alemanha 10
-0 0

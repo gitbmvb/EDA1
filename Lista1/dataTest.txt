@@ -1,7 +1,0 @@
-10
-3
-D 3
-E 6
-D 9
-D
-ATBBBBBBTBBE
